@@ -317,6 +317,8 @@ namespace HttpClient.Extension
 
         public static async Task DownloadAsync(this System.Net.Http.HttpClient client, string url, string saveFileName, Action<long, long, decimal> onProgressChanged = null, Action<long> onCompleted = null, Action<string> onError = null, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrWhiteSpace(saveFileName))
+                throw new ArgumentNullException(nameof(saveFileName));
             var totalSize = 0L;
             var readLen = 0L;
             if (onProgressChanged != null)
