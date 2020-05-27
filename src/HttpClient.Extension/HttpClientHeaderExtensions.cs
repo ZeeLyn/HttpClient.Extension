@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
-using System.Net.Http;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 
 namespace HttpClient.Extension
 {
@@ -51,5 +50,21 @@ namespace HttpClient.Extension
             return client;
         }
 
+        public static System.Net.Http.HttpClient Accept(this System.Net.Http.HttpClient client, string accept)
+        {
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(accept));
+            return client;
+        }
+
+        public static System.Net.Http.HttpClient Range(this System.Net.Http.HttpClient client, long? from, long? to)
+        {
+            client.DefaultRequestHeaders.Range = new RangeHeaderValue(from, to);
+            return client;
+        }
+
+        public static System.Net.Http.HttpClient Referrer(this System.Net.Http.HttpClient client, string referrer)
+        {
+            client.DefaultRequestHeaders.Referrer = new Uri(referrer);
+            return client;
     }
 }

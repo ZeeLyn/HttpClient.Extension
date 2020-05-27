@@ -280,22 +280,6 @@ namespace HttpClient.Extension
 
         #endregion
 
-        public static async Task<ResponseResult<TResult>> PatchAsync<TResult>(this System.Net.Http.HttpClient client, string url)
-        {
-
-
-            //var response = await client.PatchAsync(url, new StringContent(""));
-
-            //return new ResponseResult<TResult>
-            //{
-            //    Succeed = response.IsSuccessStatusCode,
-            //    StatusCode = response.StatusCode,
-            //    Headers = response.Headers,
-            //    Result = await HttpResponseContentReader.ReadAsync<TResult>(response.Content)
-            //};
-            return default;
-        }
-
         #region HEAD
 
         public static async Task<ResponseResult<HttpContentHeaders>> HeadAsync(this System.Net.Http.HttpClient client, string url)

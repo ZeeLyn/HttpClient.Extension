@@ -3,6 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/1100100/HttpClient.Extension</PackageProjectUrl>
+    <PackageTags>netcore,httpclient,restclient,restapi</PackageTags>
+    <Authors>OWEN</Authors>
+    <Description>Extension method to httpclient.</Description>
   </PropertyGroup>
 
   <ItemGroup>
