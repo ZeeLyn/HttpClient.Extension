@@ -66,5 +66,6 @@ namespace HttpClient.Extension
         {
             client.DefaultRequestHeaders.Referrer = new Uri(referrer);
             return client;
+        }
     }
 }
