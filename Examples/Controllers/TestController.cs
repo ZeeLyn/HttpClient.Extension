@@ -40,7 +40,7 @@ namespace Examples.Controllers
             //      {
             //          Console.WriteLine(err);
             //      });
-            return Ok();
+            return Ok(client);
         }
 
         [Route("req-test"), Consumes("multipart/form-data")]

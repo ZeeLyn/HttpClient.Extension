@@ -9,6 +9,7 @@
     <PackageTags>netcore,httpclient,restclient,restapi</PackageTags>
     <Authors>OWEN</Authors>
     <Description>Extension method to httpclient.</Description>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

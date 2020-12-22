@@ -104,7 +104,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent("form-data");
             foreach (var filePath in filePaths)
             {
-                content.Add(new ByteArrayContent(File.ReadAllBytes(filePath)), "file", Path.GetFileName(filePath));
+                var byteContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
             return await client.PostAsync<TResult>(url, content);
         }
@@ -115,7 +119,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent("form-data");
             foreach (var file in files)
             {
-                content.Add(new ByteArrayContent(file.FileBytes), file.Name, file.FileName);
+                var byteContent = new ByteArrayContent(file.FileBytes);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, file.Name, file.FileName);
             }
             return await client.PostAsync<TResult>(url, content);
         }
@@ -125,7 +133,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent("form-data");
             foreach (var file in files)
             {
-                content.Add(new StreamContent(file.FileStream), file.Name, file.FileName);
+                var streamContent = new StreamContent(file.FileStream);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(streamContent, file.Name, file.FileName);
             }
             return await client.PostAsync<TResult>(url, content);
         }
@@ -138,7 +150,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var filePath in filePaths)
             {
-                content.Add(new ByteArrayContent(File.ReadAllBytes(filePath)), "file", Path.GetFileName(filePath));
+                var byteContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
 
             foreach (var para in ParameterBuilder.GetAllValues(formData))
@@ -155,7 +171,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var filePath in filePaths)
             {
-                content.Add(new ByteArrayContent(File.ReadAllBytes(filePath)), "file", Path.GetFileName(filePath));
+                var byteContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
 
             foreach (var para in formData)
@@ -172,7 +192,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var file in files)
             {
-                content.Add(new ByteArrayContent(file.FileBytes), file.Name, file.FileName);
+                var byteContent = new ByteArrayContent(file.FileBytes);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, file.Name, file.FileName);
             }
 
             foreach (var para in ParameterBuilder.GetAllValues(formData))
@@ -189,7 +213,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var file in files)
             {
-                content.Add(new ByteArrayContent(file.FileBytes), file.Name, file.FileName);
+                var byteContent = new ByteArrayContent(file.FileBytes);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(byteContent, file.Name, file.FileName);
             }
 
             foreach (var para in formData)
@@ -206,7 +234,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var file in files)
             {
-                content.Add(new StreamContent(file.FileStream), file.Name, file.FileName);
+                var streamContent = new StreamContent(file.FileStream);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(streamContent, file.Name, file.FileName);
             }
 
             foreach (var para in ParameterBuilder.GetAllValues(formData))
@@ -223,7 +255,11 @@ namespace HttpClient.Extension
             using var content = new MultipartFormDataContent();
             foreach (var file in files)
             {
-                content.Add(new StreamContent(file.FileStream), file.Name, file.FileName);
+                var streamContent = new StreamContent(file.FileStream);
+                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName), out var mediaType))
+                    mediaType = "application/octet-stream";
+                streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+                content.Add(streamContent, file.Name, file.FileName);
             }
 
             foreach (var para in formData)
