@@ -2,6 +2,12 @@
 
 Extension method to httpclient
 
+# Packages & Status
+
+| Packages             | NuGet                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| HttpClient.Extension | [![NuGet package](https://buildstats.info/nuget/HttpClient.Extension)](https://www.nuget.org/packages/HttpClient.Extension) |
+
 ```csharp
 public class TestController : ControllerBase
 {
