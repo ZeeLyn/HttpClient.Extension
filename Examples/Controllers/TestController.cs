@@ -43,6 +43,24 @@ namespace Examples.Controllers
             return Ok(client);
         }
 
+
+        [HttpGet("req2")]
+        public async Task<IActionResult> RequestAPI2()
+        {
+            var client = await HttpClientFactory.CreateClient()
+                .Authorization("Basic", "YnVzaW5lc3M6WGNtZzEyMw==")
+                .Timeout(TimeSpan.FromSeconds(10))
+                .PostFormAsync<string>("https://port.hanyunmmip.cn/auth/oauth/token", new
+                {
+                    username = "tiaoshi1",
+                    password = "asdf123Q",
+                    scope = "server",
+                    grant_type = "password"
+                });
+            return Ok(client.Result);
+        }
+
+
         [Route("req-test"), Consumes("multipart/form-data")]
         public IActionResult Req([FromForm] string name)
         {

@@ -7,24 +7,32 @@ namespace HttpClient.Extension
 {
     public static class HttpClientHeaderExtensions
     {
-        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client, string name, string value)
+        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client, string name,
+            string value)
         {
+            if (client.DefaultRequestHeaders.Contains(name))
+                client.DefaultRequestHeaders.Remove(name);
             client.DefaultRequestHeaders.Add(name, value);
             return client;
         }
 
-        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client, IDictionary<string, string> headers)
+        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client,
+            IDictionary<string, string> headers)
         {
             if (headers == null || !headers.Any())
                 return client;
             foreach (var header in headers)
             {
+                if (client.DefaultRequestHeaders.Contains(header.Key))
+                    client.DefaultRequestHeaders.Remove(header.Key);
                 client.DefaultRequestHeaders.Add(header.Key, header.Value);
             }
+
             return client;
         }
 
-        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client, params string[] headers)
+        public static System.Net.Http.HttpClient AddHeader(this System.Net.Http.HttpClient client,
+            params string[] headers)
         {
             if (headers == null || !headers.Any())
                 return client;
@@ -32,15 +40,20 @@ namespace HttpClient.Extension
                 throw new Exception("The number of headers members should be even.");
             for (var i = 0; i < headers.Length; i++)
             {
+                if (client.DefaultRequestHeaders.Contains(headers[i]))
+                    client.DefaultRequestHeaders.Remove(headers[i]);
                 client.DefaultRequestHeaders.Add(headers[i], headers[i + 1]);
                 i++;
             }
+
             return client;
         }
 
-        public static System.Net.Http.HttpClient Authorization(this System.Net.Http.HttpClient client, string scheme, string parameter)
+        public static System.Net.Http.HttpClient Authorization(this System.Net.Http.HttpClient client, string scheme,
+            string parameter)
         {
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(scheme, parameter);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue(scheme, parameter);
             return client;
         }
 
