@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace HttpClient.Extension.Resilience
 {
-    public class MediaType
+    internal class MediaType
     {
-        public static readonly Dictionary<string, string> MediaTypes =
+        internal static readonly Dictionary<string, string> MediaTypes =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {
