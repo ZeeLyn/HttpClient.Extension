@@ -6,7 +6,7 @@ namespace HttpClient.Extension.Resilience
     internal class MediaType
     {
         internal static readonly Dictionary<string, string> MediaTypes =
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 {
                     ".",
