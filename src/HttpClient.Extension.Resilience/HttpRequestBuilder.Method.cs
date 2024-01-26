@@ -533,7 +533,7 @@ namespace HttpClient.Extension.Resilience
                 {
                     readLen += read;
                     var p = Math.Round((decimal)readLen / totalSize * 100, 3);
-                    onProgressChanged?.Invoke(totalSize, readLen, p);
+                    onProgressChanged(totalSize, readLen, p);
                 }
             }
 

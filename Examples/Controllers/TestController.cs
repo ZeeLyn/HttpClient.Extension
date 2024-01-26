@@ -48,17 +48,14 @@ namespace Examples.Controllers
             //      });
 
             var result = await HttpRequest.Create("google")
-                .ExceptionHandle((sc, url, ex) => { return true; })
-                .FallbackHandleAsync(async (sc, ex, context) =>
+                .ExceptionHandle((sc, url, ex) => true)
+                .FallbackHandleAsync(async (sc, ex, context) => await Task.FromResult(new HttpResponseMessage
                 {
-                    return new HttpResponseMessage
-                    {
-                        StatusCode = 0,
-                        Content = new StringContent("方法里自定义降级消息：" + ex?.Message)
-                    };
-                })
+                    StatusCode = 0,
+                    Content = new StringContent("方法里自定义降级消息：" + ex?.Message)
+                }))
                 .Retry(3)
-                .WaitAndRetry(TimeSpan.FromSeconds(3))
+                .WaitAndRetry(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10))
                 .Timeout(TimeSpan.FromSeconds(10))
                 .GetAsync<string>(
                     "/search?q=翻译&sca_esv=601619779&sxsrf=ACQVn0_SQUKgckqys8GIYJxvaqQckHrQxg%3A1706240783592&source=hp&ei=DyuzZfqRIr-v0-kP1uow&iflsig=ANes7DEAAAAAZbM5H_EwIREkLHg-Pd86kRoLVHcfFFlZ&ved=0ahUKEwi61biekvqDAxW_1zQHHVY1DAAQ4dUDCA0&uact=5&oq=翻译&gs_lp=Egdnd3Mtd2l6Igbnv7vor5EyChAjGIAEGIoFGCcyCxAAGIAEGLEDGIMBMgsQABiABBixAxiDATIIEAAYgAQYsQMyBRAAGIAEMgsQABiABBixAxiDATIFEAAYgAQyBRAAGIAEMgUQABiABDIFEAAYgARIqBFQzghY9A5wAXgAkAEAmAGjAaAB8waqAQMwLja4AQPIAQD4AQGoAgrCAgcQIxjqAhgnwgIREC4YgAQYsQMYgwEYxwEY0QPCAgUQLhiABMICCxAuGIAEGLEDGIMBwgIIEC4YsQMYgATCAg4QLhiABBiKBRixAxiDAcICDhAAGIAEGIoFGLEDGIMB&sclient=gws-wiz");
