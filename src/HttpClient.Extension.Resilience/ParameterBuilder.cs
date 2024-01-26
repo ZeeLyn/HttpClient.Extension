@@ -9,8 +9,7 @@ namespace HttpClient.Extension.Resilience
 {
     public class ParameterBuilder
     {
-        protected static readonly ConcurrentDictionary<Type, List<PropertyInfo>> ParametersCache =
-            new ConcurrentDictionary<Type, List<PropertyInfo>>();
+        protected static readonly ConcurrentDictionary<Type, List<PropertyInfo>> ParametersCache = new();
 
 
         internal static IReadOnlyList<PropertyInfo> GetProperties(Type type)
@@ -31,7 +30,7 @@ namespace HttpClient.Extension.Resilience
         internal static Dictionary<string, string> GetAllValues(object parameters)
         {
             return GetProperties(parameters.GetType())
-                .ToDictionary(key => key.Name, val => val.GetValue(parameters).ToString());
+                .ToDictionary(key => key.Name, val => val.GetValue(parameters)?.ToString());
         }
 
         private static string BuildQueryString(IDictionary<string, string> parameters)
