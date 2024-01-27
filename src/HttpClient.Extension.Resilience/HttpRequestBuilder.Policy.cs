@@ -10,7 +10,7 @@ namespace HttpClient.Extension.Resilience
         /// <summary>
         /// 异常过滤处理器
         /// </summary>
-        /// <param name="handle">返回True,表示截获异常，执行重试或降级处理，不再继续向上抛出。反之继续抛出异常，在业务代理里处理异常信息</param>
+        /// <param name="handle">返回True,表示截获异常，执行重试或降级处理，不再继续向上抛出。反之继续抛出异常，在业务代码里处理异常信息</param>
         /// <returns></returns>
         public IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle)
         {
