@@ -7,7 +7,7 @@ using Polly;
 
 namespace HttpClient.Extension.Resilience
 {
-    public partial class HttpRequestBuilder : IDisposable
+    public sealed partial class HttpRequestBuilder : IHttpRequestBuilder
     {
         public HttpRequestBuilder(System.Net.Http.HttpClient client, IServiceProvider serviceProvider,
             ILogger<HttpRequestBuilder> logger)

@@ -7,7 +7,7 @@ namespace HttpClient.Extension.Resilience
 {
     public partial class HttpRequestBuilder
     {
-        public HttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle)
+        public IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle)
         {
             _exceptionHandle = handle;
             return this;
@@ -19,7 +19,7 @@ namespace HttpClient.Extension.Resilience
         /// <param name="retry"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public HttpRequestBuilder Retry(int retry)
+        public IHttpRequestBuilder Retry(int retry)
         {
             if (retry < 0) throw new ArgumentException("The number of retries must be greater than or equal to 0");
 
@@ -33,28 +33,28 @@ namespace HttpClient.Extension.Resilience
         /// </summary>
         /// <param name="sleepDurations"></param>
         /// <returns></returns>
-        public HttpRequestBuilder WaitAndRetry(params TimeSpan[] sleepDurations)
+        public IHttpRequestBuilder WaitAndRetry(params TimeSpan[] sleepDurations)
         {
             _retry = 0;
             _waitAndRetrySleepDurations = sleepDurations;
             return this;
         }
 
-        public HttpRequestBuilder OnRetry(
+        public IHttpRequestBuilder OnRetry(
             Action<IServiceProvider, DelegateResult<HttpResponseMessage>, TimeSpan, int, Context> onRetry)
         {
             _onRetry = onRetry;
             return this;
         }
 
-        public HttpRequestBuilder FallbackHandleAsync(
+        public IHttpRequestBuilder FallbackHandleAsync(
             Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>> handle)
         {
             _fallbackHandleAsync = handle;
             return this;
         }
 
-        public HttpRequestBuilder OnFallbackAsync(
+        public IHttpRequestBuilder OnFallbackAsync(
             Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? action)
         {
             _onFallbackAsync = action;

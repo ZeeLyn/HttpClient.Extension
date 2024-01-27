@@ -7,13 +7,13 @@ namespace HttpClient.Extension.Resilience
 {
     public partial class HttpRequestBuilder
     {
-        public HttpRequestBuilder Timeout(TimeSpan timeout)
+        public IHttpRequestBuilder Timeout(TimeSpan timeout)
         {
             Client.Timeout = timeout;
             return this;
         }
 
-        public HttpRequestBuilder AddHeader(string name, string value)
+        public IHttpRequestBuilder AddHeader(string name, string value)
         {
             if (Client.DefaultRequestHeaders.Contains(name))
                 Client.DefaultRequestHeaders.Remove(name);
@@ -21,7 +21,7 @@ namespace HttpClient.Extension.Resilience
             return this;
         }
 
-        public HttpRequestBuilder AddHeader(
+        public IHttpRequestBuilder AddHeader(
             IDictionary<string, string> headers)
         {
             if (headers == null || !headers.Any())
@@ -36,7 +36,7 @@ namespace HttpClient.Extension.Resilience
             return this;
         }
 
-        public HttpRequestBuilder AddHeader(params string[] headers)
+        public IHttpRequestBuilder AddHeader(params string[] headers)
         {
             if (headers == null || !headers.Any())
                 return this;
@@ -53,7 +53,7 @@ namespace HttpClient.Extension.Resilience
             return this;
         }
 
-        public HttpRequestBuilder Authorization(string scheme,
+        public IHttpRequestBuilder Authorization(string scheme,
             string parameter)
         {
             Client.DefaultRequestHeaders.Authorization =
@@ -61,25 +61,25 @@ namespace HttpClient.Extension.Resilience
             return this;
         }
 
-        public HttpRequestBuilder UserAgent(string userAgent)
+        public IHttpRequestBuilder UserAgent(string userAgent)
         {
             Client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
             return this;
         }
 
-        public HttpRequestBuilder Accept(string accept)
+        public IHttpRequestBuilder Accept(string accept)
         {
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(accept));
             return this;
         }
 
-        public HttpRequestBuilder Range(long? from, long? to)
+        public IHttpRequestBuilder Range(long? from, long? to)
         {
             Client.DefaultRequestHeaders.Range = new RangeHeaderValue(from, to);
             return this;
         }
 
-        public HttpRequestBuilder Referrer(string referrer)
+        public IHttpRequestBuilder Referrer(string referrer)
         {
             Client.DefaultRequestHeaders.Referrer = new Uri(referrer);
             return this;

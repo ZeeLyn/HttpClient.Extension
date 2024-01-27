@@ -2,6 +2,6 @@
 {
     public interface IHttpRequest
     {
-        HttpRequestBuilder Create(string name = null);
+        IHttpRequestBuilder Create(string name = null);
     }
 }

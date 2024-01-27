@@ -6,7 +6,7 @@ using System.Net.Http;
 
 namespace HttpClient.Extension.Resilience
 {
-    public class HttpRequest : IHttpRequest
+    public sealed class HttpRequest : IHttpRequest
     {
         private IHttpClientFactory Factory { get; }
 
@@ -21,11 +21,13 @@ namespace HttpClient.Extension.Resilience
             ServiceProvider = serviceProvider;
         }
 
-        public HttpRequestBuilder Create(string name = null)
+        public IHttpRequestBuilder Create(string name = null)
         {
             var builder = new HttpRequestBuilder(
                 string.IsNullOrWhiteSpace(name) ? Factory.CreateClient() : Factory.CreateClient(name),
-                ServiceProvider, ServiceProvider.GetRequiredService<ILogger<HttpRequestBuilder>>());
+                ServiceProvider,
+                ServiceProvider.GetRequiredService<ILogger<HttpRequestBuilder>>()
+            );
 
             if (Options is null) return builder;
 

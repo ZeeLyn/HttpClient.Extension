@@ -101,19 +101,22 @@ namespace HttpClient.Extension.Resilience
 
         private async Task<ResponseResult<TResult>> BuildResponseResult<TResult>(HttpResponsePolicyResult response)
         {
-            return new ResponseResult<TResult>
+            using (response.ResponseMessage)
             {
-                Succeed = response.ResponseMessage.IsSuccessStatusCode,
-                StatusCode = response.ResponseMessage.StatusCode,
-                Headers = response.ResponseMessage.Headers,
-                Exception = response.Exception,
-                ErrorMessage = response.ResponseMessage.IsSuccessStatusCode
-                    ? string.Empty
-                    : await response.ResponseMessage.Content.ReadAsStringAsync(),
-                Result = response.ResponseMessage.IsSuccessStatusCode
-                    ? await response.ResponseMessage.Content.ReadAsync<TResult>()
-                    : default
-            };
+                return new ResponseResult<TResult>
+                {
+                    Succeed = response.ResponseMessage.IsSuccessStatusCode,
+                    StatusCode = response.ResponseMessage.StatusCode,
+                    Headers = response.ResponseMessage.Headers,
+                    Exception = response.Exception,
+                    ErrorMessage = response.ResponseMessage.IsSuccessStatusCode
+                        ? string.Empty
+                        : await response.ResponseMessage.Content.ReadAsStringAsync(),
+                    Result = response.ResponseMessage.IsSuccessStatusCode
+                        ? await response.ResponseMessage.Content.ReadAsync<TResult>()
+                        : default
+                };
+            }
         }
 
         public async Task<ResponseResult<TResult>> GetAsync<TResult>(string url)
