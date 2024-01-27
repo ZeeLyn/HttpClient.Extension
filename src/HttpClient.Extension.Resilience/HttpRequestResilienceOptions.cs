@@ -8,6 +8,9 @@ namespace HttpClient.Extension.Resilience
 {
     public class HttpRequestResilienceOptions
     {
+        /// <summary>
+        /// 返回True,表示截获异常，执行重试或降级处理，不再继续向上抛出。反之继续抛出异常，在业务代理里处理异常信息
+        /// </summary>
         public Func<IServiceProvider, string, Exception, bool> ExceptionHandle { get; set; } = (_, _, _) => true;
 
         /// <summary>
@@ -26,6 +29,9 @@ namespace HttpClient.Extension.Resilience
             set;
         }
 
+        /// <summary>
+        /// 降级处理，返回自定义响应消息
+        /// </summary>
         public Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>>? FallbackHandleAsync { get; set; }
 
         public Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? OnFallbackAsync { get; set; }

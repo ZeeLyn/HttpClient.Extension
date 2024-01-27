@@ -7,6 +7,11 @@ namespace HttpClient.Extension.Resilience
 {
     public partial class HttpRequestBuilder
     {
+        /// <summary>
+        /// 异常过滤处理器
+        /// </summary>
+        /// <param name="handle">返回True,表示截获异常，执行重试或降级处理，不再继续向上抛出。反之继续抛出异常，在业务代理里处理异常信息</param>
+        /// <returns></returns>
         public IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle)
         {
             _exceptionHandle = handle;
@@ -47,6 +52,11 @@ namespace HttpClient.Extension.Resilience
             return this;
         }
 
+        /// <summary>
+        /// 降级处理器
+        /// </summary>
+        /// <param name="handle">返回自定义响应消息</param>
+        /// <returns></returns>
         public IHttpRequestBuilder FallbackHandleAsync(
             Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>> handle)
         {
