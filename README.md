@@ -39,34 +39,34 @@ public class TestController : ControllerBase
 ```csharp
 
 public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+    services.AddHttpClient("google", client => { client.BaseAddress = new Uri("https://www.google.com"); });
+    services.AddHttpClientResilience(options =>
+    {
+        options.ExceptionHandle = (sc, url, ex) =>
         {
-            services.AddControllers();
-            services.AddHttpClient("google", client => { client.BaseAddress = new Uri("https://www.google.com"); });
-            services.AddHttpClientResilience(options =>
+            Console.WriteLine(" 请求{0}出现错误：{1}", url, ex.Message);
+            return true;
+        };
+        options.Retry = 2;
+        options.WaitAndRetrySleepDurations = null;
+        options.OnRetry = (sc, msg, ts, retryCount, context) => { Console.WriteLine("执行第{0}次重试", retryCount); };
+        options.OnFallbackAsync = async (sc, msg, context) =>
+        {
+            await Task.CompletedTask;
+            Console.WriteLine("执行降级处理");
+        };
+        options.FallbackHandleAsync = async (sc, ex, context) =>
+        {
+            return new HttpResponseMessage
             {
-                options.ExceptionHandle = (sc, url, ex) =>
-                {
-                    Console.WriteLine(" 请求{0}出现错误：{1}", url, ex.Message);
-                    return true;
-                };
-                options.Retry = 2;
-                options.WaitAndRetrySleepDurations = null;
-                options.OnRetry = (sc, msg, ts, retryCount, context) => { Console.WriteLine("执行第{0}次重试", retryCount); };
-                options.OnFallbackAsync = async (sc, msg, context) =>
-                {
-                    await Task.CompletedTask;
-                    Console.WriteLine("执行降级处理");
-                };
-                options.FallbackHandleAsync = async (sc, ex, context) =>
-                {
-                    return new HttpResponseMessage
-                    {
-                        StatusCode = 0,
-                        Content = new StringContent("自定义降级消息：" + ex?.Message)
-                    };
-                };
-            });
-        }
+                StatusCode = 0,
+                Content = new StringContent("自定义降级消息：" + ex?.Message)
+            };
+        };
+    });
+}
 
 public class TestController : ControllerBase
 {
