@@ -67,6 +67,14 @@ namespace HttpClient.Extension.Resilience
                 case "System.DateTime":
                     result = await Convert(content, DateTime.Parse);
                     break;
+#if NET6_0_OR_GREATER
+                case "System.DateOnly":
+                    result = await Convert(content, DateOnly.Parse);
+                    break;
+                case "System.TimeOnly":
+                    result = await Convert(content, TimeOnly.Parse);
+                    break;
+#endif
                 case "System.DateTimeOffset":
                     result = await Convert(content, DateTimeOffset.Parse);
                     break;
