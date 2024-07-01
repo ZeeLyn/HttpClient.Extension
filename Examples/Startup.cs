@@ -36,10 +36,10 @@ namespace Examples
                     Console.WriteLine(" 请求{0}出现错误：{1}", url, ex.Message);
                     return true;
                 };
-                options.Retry = 2;
+                options.Retry = 3;
                 options.WaitAndRetrySleepDurations = null;
-                options.OnRetry = (sc, msg, ts, retryCount, context) => { Console.WriteLine("执行第{0}次重试", retryCount); };
-                options.OnFallbackAsync = async (sc, msg, context) =>
+                options.OnRetry = (sc, ts, retryCount, context) => { Console.WriteLine("执行第{0}次重试", retryCount); };
+                options.OnFallbackAsync = async (sc, context) =>
                 {
                     await Task.CompletedTask;
                     Console.WriteLine("执行降级处理");

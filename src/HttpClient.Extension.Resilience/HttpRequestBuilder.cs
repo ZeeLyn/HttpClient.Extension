@@ -23,6 +23,8 @@ namespace HttpClient.Extension.Resilience
 
         private IServiceProvider ServiceProvider { get; }
 
+        internal Func<HttpResponseMessage, bool> _resultHandle { get; set; } =
+            resp => resp.StatusCode != System.Net.HttpStatusCode.OK;
 
         internal Func<IServiceProvider, string, Exception, bool> _exceptionHandle { get; set; } = (_, _, _) => true;
 
@@ -30,23 +32,15 @@ namespace HttpClient.Extension.Resilience
 
         internal IEnumerable<TimeSpan> _waitAndRetrySleepDurations { get; set; }
 
-        internal Action<IServiceProvider, DelegateResult<HttpResponseMessage>, TimeSpan, int, Context>? _onRetry
+        internal Action<IServiceProvider, TimeSpan, int, ResilienceContext>? _onRetry { get; set; }
+
+        internal Func<IServiceProvider, Exception, ResilienceContext, Task<HttpResponseMessage>>? _fallbackHandleAsync
         {
             get;
             set;
         }
 
-        internal Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>>? _fallbackHandleAsync
-        {
-            get;
-            set;
-        }
-
-        internal Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? _onFallbackAsync
-        {
-            get;
-            set;
-        }
+        internal Func<IServiceProvider, ResilienceContext, Task>? _onFallbackAsync { get; set; }
 
         public void Dispose()
         {

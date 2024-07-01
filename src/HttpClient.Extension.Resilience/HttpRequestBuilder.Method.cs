@@ -10,94 +10,175 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
+using Polly.Fallback;
+using Polly.Retry;
 
 namespace HttpClient.Extension.Resilience
 {
     public partial class HttpRequestBuilder
     {
         private async Task<HttpResponsePolicyResult> RequestWrapPolicyAsync(string requestUrl,
-            Func<Task<HttpResponseMessage>> request)
+            Func<CancellationToken, Task<HttpResponseMessage>> request)
         {
-            requestUrl = Client?.BaseAddress + requestUrl;
             var result = new HttpResponsePolicyResult();
-            if (_retry <= 0 && _exceptionHandle is null)
-            {
-                result.ResponseMessage = await request.Invoke();
-                Dispose();
-                return result;
-            }
-
             Exception exception = default;
+            var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
 
-            var basePolicy = Policy<HttpResponseMessage>.Handle<Exception>(ex =>
+            var predicateBuilder = new PredicateBuilder<HttpResponseMessage>()
+                .HandleResult(resp => _resultHandle?.Invoke(resp) ?? true)
+                .Handle<Exception>(ex =>
                 {
+                    requestUrl = Client?.BaseAddress + requestUrl;
                     exception = ex;
                     Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
                     return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex) ?? true;
-                }
-            );
+                });
 
-            var policies = new List<IAsyncPolicy<HttpResponseMessage>>();
 
-            var fallbackPolicy = basePolicy.FallbackAsync(async (context, _) =>
+            builder.AddFallback(new FallbackStrategyOptions<HttpResponseMessage>
+            {
+                ShouldHandle = predicateBuilder,
+                FallbackAction = async args =>
                 {
                     Logger.LogInformation("Executing fallback");
                     result.Exception = exception;
-
-                    return _fallbackHandleAsync is not null
-                        ? await _fallbackHandleAsync.Invoke(ServiceProvider, exception, context)
+                    return Outcome.FromResult(_fallbackHandleAsync is not null
+                        ? await _fallbackHandleAsync.Invoke(ServiceProvider, exception, args.Context)
                         : new HttpResponseMessage
                         {
                             StatusCode = 0,
                             Content = new StringContent(exception is null ? "Request failed" : exception.Message,
                                 Encoding.UTF8)
-                        };
+                        });
                 },
-                async (msg, context) =>
+                OnFallback = async args =>
                 {
                     Logger.LogInformation("Start execute fallback");
                     if (_onFallbackAsync is not null)
-                        await _onFallbackAsync.Invoke(ServiceProvider, msg, context);
-                });
-
-            policies.Add(fallbackPolicy);
-
+                        await _onFallbackAsync.Invoke(ServiceProvider, args.Context);
+                }
+            });
             if (_retry > 0)
             {
-                var retryPolicy = basePolicy.RetryAsync(_retry,
-                    (msg, retryCount, context) =>
+                var retryOptions = new RetryStrategyOptions<HttpResponseMessage>
+                {
+                    ShouldHandle = predicateBuilder,
+                    MaxRetryAttempts = _retry,
+                    OnRetry = async args =>
                     {
                         exception = default;
-                        _onRetry?.Invoke(ServiceProvider, msg, TimeSpan.Zero, retryCount, context);
-                        Logger.LogInformation("Retry: {0}", retryCount);
-                    });
-                policies.Add(retryPolicy);
-                var policy = Policy.WrapAsync(policies.ToArray());
-                result.ResponseMessage = await policy.ExecuteAsync(async () => await request());
-                Dispose();
-                return result;
-            }
+                        _onRetry?.Invoke(ServiceProvider, TimeSpan.Zero, args.AttemptNumber + 1, args.Context);
+                        Logger.LogInformation("Retry: {0}", args.AttemptNumber + 1);
+                        await Task.CompletedTask;
+                    },
+                };
 
-            if (_waitAndRetrySleepDurations?.Any() ?? false)
-            {
-                var retryPolicy = basePolicy.WaitAndRetryAsync(_waitAndRetrySleepDurations,
-                    (msg, ts, retryCount, context) =>
+
+                if (_waitAndRetrySleepDurations?.Any() ?? false)
+                {
+                    retryOptions.DelayGenerator = async args =>
                     {
-                        exception = default;
-                        _onRetry?.Invoke(ServiceProvider, msg, ts, retryCount, context);
-                        Logger.LogInformation("Sleep:{0}ms,Retry: {1}", ts.TotalMilliseconds, retryCount);
-                    });
-                policies.Add(retryPolicy);
-                var policy = Policy.WrapAsync(policies.ToArray());
-                result.ResponseMessage = await policy.ExecuteAsync(async () => await request());
-                Dispose();
-                return result;
+                        if (args.AttemptNumber - 1 > _waitAndRetrySleepDurations.Count())
+                            return TimeSpan.Zero;
+                        return await Task.FromResult(_waitAndRetrySleepDurations.ElementAt(args.AttemptNumber));
+                    };
+                }
+
+                builder.AddRetry(retryOptions);
             }
 
-            result.ResponseMessage = await fallbackPolicy.ExecuteAsync(async () => await request());
+            var pipeline = builder.Build();
+            result.ResponseMessage =
+                await pipeline.ExecuteAsync(async cancellationToken => await request(cancellationToken));
             Dispose();
             return result;
         }
+
+        //private async Task<HttpResponsePolicyResult> RequestWrapPolicyAsync(string requestUrl,
+        //    Func<Task<HttpResponseMessage>> request)
+        //{
+        //    requestUrl = Client?.BaseAddress + requestUrl;
+        //    var result = new HttpResponsePolicyResult();
+        //    if (_retry <= 0 && _exceptionHandle is null)
+        //    {
+        //        result.ResponseMessage = await request.Invoke();
+        //        Dispose();
+        //        return result;
+        //    }
+
+        //    Exception exception = default;
+
+        //    var basePolicy = Policy<HttpResponseMessage>.Handle<Exception>(ex =>
+        //        {
+        //            exception = ex;
+        //            Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
+        //            return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex) ?? true;
+        //        }
+        //    );
+
+        //    //var resultPolicy = Policy<HttpResponseMessage>.HandleResult(resp => _resultHandle?.Invoke(resp) ?? true);
+
+        //    var policies = new List<IAsyncPolicy<HttpResponseMessage>>();
+
+        //    var fallbackPolicy = basePolicy.FallbackAsync(async (context, _) =>
+        //        {
+        //            Logger.LogInformation("Executing fallback");
+        //            result.Exception = exception;
+
+        //            return _fallbackHandleAsync is not null
+        //                ? await _fallbackHandleAsync.Invoke(ServiceProvider, exception, context)
+        //                : new HttpResponseMessage
+        //                {
+        //                    StatusCode = 0,
+        //                    Content = new StringContent(exception is null ? "Request failed" : exception.Message,
+        //                        Encoding.UTF8)
+        //                };
+        //        },
+        //        async (msg, context) =>
+        //        {
+        //            Logger.LogInformation("Start execute fallback");
+        //            if (_onFallbackAsync is not null)
+        //                await _onFallbackAsync.Invoke(ServiceProvider, msg, context);
+        //        });
+
+        //    policies.Add(fallbackPolicy);
+
+        //    if (_retry > 0)
+        //    {
+        //        var retryPolicy = basePolicy.RetryAsync(_retry,
+        //            (msg, retryCount, context) =>
+        //            {
+        //                exception = default;
+        //                _onRetry?.Invoke(ServiceProvider, msg, TimeSpan.Zero, retryCount, context);
+        //                Logger.LogInformation("Retry: {0}", retryCount);
+        //            });
+        //        policies.Add(retryPolicy);
+        //        var policy = Policy.WrapAsync(policies.ToArray());
+        //        result.ResponseMessage = await policy.ExecuteAsync(async () => await request());
+        //        Dispose();
+        //        return result;
+        //    }
+
+        //    if (_waitAndRetrySleepDurations?.Any() ?? false)
+        //    {
+        //        var retryPolicy = basePolicy.WaitAndRetryAsync(_waitAndRetrySleepDurations,
+        //            (msg, ts, retryCount, context) =>
+        //            {
+        //                exception = default;
+        //                _onRetry?.Invoke(ServiceProvider, msg, ts, retryCount, context);
+        //                Logger.LogInformation("Sleep:{0}ms,Retry: {1}", ts.TotalMilliseconds, retryCount);
+        //            });
+        //        policies.Add(retryPolicy);
+        //        var policy = Policy.WrapAsync(policies.ToArray());
+        //        result.ResponseMessage = await policy.ExecuteAsync(async () => await request());
+        //        Dispose();
+        //        return result;
+        //    }
+
+        //    result.ResponseMessage = await fallbackPolicy.ExecuteAsync(async () => await request());
+        //    Dispose();
+        //    return result;
+        //}
 
         private async Task<ResponseResult<TResult>> BuildResponseResult<TResult>(HttpResponsePolicyResult response)
         {
@@ -122,7 +203,8 @@ namespace HttpClient.Extension.Resilience
         public async Task<ResponseResult<TResult>> GetAsync<TResult>(string url)
         {
             using var response =
-                await RequestWrapPolicyAsync(url, async () => await Client.GetAsync(url));
+                await RequestWrapPolicyAsync(url,
+                    async (cancellationToken) => await Client.GetAsync(url, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -131,7 +213,8 @@ namespace HttpClient.Extension.Resilience
         public async Task<ResponseResult<TResult>> PostAsync<TResult>(string url, HttpContent data)
         {
             using var response =
-                await RequestWrapPolicyAsync(url, async () => await Client.PostAsync(url, data));
+                await RequestWrapPolicyAsync(url,
+                    async (cancellationToken) => await Client.PostAsync(url, data, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -151,7 +234,7 @@ namespace HttpClient.Extension.Resilience
             using var content = new StringContent(formQueryString, Encoding.UTF8, contentType);
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -179,7 +262,7 @@ namespace HttpClient.Extension.Resilience
             using var content = new StringContent(json, Encoding.UTF8, contentType);
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -211,7 +294,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -232,7 +315,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -252,7 +335,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -284,7 +367,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -313,7 +396,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -338,7 +421,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -364,7 +447,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -389,7 +472,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -415,7 +498,7 @@ namespace HttpClient.Extension.Resilience
 
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PostAsync(url, content));
+                    async (cancellationToken) => await Client.PostAsync(url, content, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -429,7 +512,7 @@ namespace HttpClient.Extension.Resilience
         {
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.PutAsync(url, data));
+                    async (cancellationToken) => await Client.PutAsync(url, data, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -456,7 +539,7 @@ namespace HttpClient.Extension.Resilience
         {
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.DeleteAsync(url));
+                    async (cancellationToken) => await Client.DeleteAsync(url, cancellationToken));
             return await BuildResponseResult<TResult>(response);
         }
 
@@ -469,7 +552,8 @@ namespace HttpClient.Extension.Resilience
         {
             using var response =
                 await RequestWrapPolicyAsync(url,
-                    async () => await Client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url)));
+                    async (cancellationToken) =>
+                        await Client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url), cancellationToken));
             return await BuildResponseResult<HttpContentHeaders>(response);
         }
 

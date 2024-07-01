@@ -8,26 +8,29 @@ namespace HttpClient.Extension.Resilience
 {
     public class HttpRequestResilienceOptions
     {
+        /// <summary>
+        /// 异常处理器，返回True将执行重试策略
+        /// </summary>
         public Func<IServiceProvider, string, Exception, bool> ExceptionHandle { get; set; } = (_, _, _) => true;
 
         /// <summary>
-        /// 如果设置了 <paramref name="WaitAndRetrySleepDurations"></paramref>，此参数将失效
+        /// 重试次数
         /// </summary>
         public int Retry { get; set; }
 
         /// <summary>
-        /// 如果设置了此参数 <paramref name="Retry"></paramref> 将失效
+        /// 重试等待时长，索引跟第几次重试对应
         /// </summary>
         public IEnumerable<TimeSpan> WaitAndRetrySleepDurations { get; set; }
 
-        public Action<IServiceProvider, DelegateResult<HttpResponseMessage>, TimeSpan, int, Context>? OnRetry
+        public Action<IServiceProvider, TimeSpan, int, ResilienceContext>? OnRetry { get; set; }
+
+        public Func<IServiceProvider, Exception, ResilienceContext, Task<HttpResponseMessage>>? FallbackHandleAsync
         {
             get;
             set;
         }
 
-        public Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>>? FallbackHandleAsync { get; set; }
-
-        public Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? OnFallbackAsync { get; set; }
+        public Func<IServiceProvider, ResilienceContext, Task>? OnFallbackAsync { get; set; }
     }
 }

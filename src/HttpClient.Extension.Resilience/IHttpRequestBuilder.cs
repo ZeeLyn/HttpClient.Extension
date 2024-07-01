@@ -34,10 +34,13 @@ namespace HttpClient.Extension.Resilience
 
         #region Policy
 
+        IHttpRequestBuilder ResultHandle(Func<HttpResponseMessage, bool> handle);
+
+
         IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle);
 
         /// <summary>
-        /// 设置了此参数，<paramref name="WaitAndRetry"/>将失效，Retry,WaitAndRetry以最后一个设置为有效设置
+        /// 重试次数
         /// </summary>
         /// <param name="retry"></param>
         /// <returns></returns>
@@ -45,20 +48,20 @@ namespace HttpClient.Extension.Resilience
         IHttpRequestBuilder Retry(int retry);
 
         /// <summary>
-        /// 设置了此参数，<paramref name="Retry"/>将失效
+        /// 重试等待时长，索引跟第几次重试对应
         /// </summary>
         /// <param name="sleepDurations"></param>
         /// <returns></returns>
         IHttpRequestBuilder WaitAndRetry(params TimeSpan[] sleepDurations);
 
         IHttpRequestBuilder OnRetry(
-            Action<IServiceProvider, DelegateResult<HttpResponseMessage>, TimeSpan, int, Context> onRetry);
+            Action<IServiceProvider, TimeSpan, int, ResilienceContext> onRetry);
 
         IHttpRequestBuilder FallbackHandleAsync(
-            Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>> handle);
+            Func<IServiceProvider, Exception, ResilienceContext, Task<HttpResponseMessage>> handle);
 
         IHttpRequestBuilder OnFallbackAsync(
-            Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? action);
+            Func<IServiceProvider, ResilienceContext, Task>? action);
 
         #endregion
 

@@ -7,6 +7,17 @@ namespace HttpClient.Extension.Resilience
 {
     public partial class HttpRequestBuilder
     {
+        public IHttpRequestBuilder ResultHandle(Func<HttpResponseMessage, bool> handle)
+        {
+            _resultHandle = handle;
+            return this;
+        }
+
+        /// <summary>
+        /// 异常过滤处理器
+        /// </summary>
+        /// <param name="handle">返回True,表示截获异常，执行重试或降级处理，不再继续向上抛出。反之继续抛出异常，在业务代码里处理异常信息</param>
+        /// <returns></returns>
         public IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle)
         {
             _exceptionHandle = handle;
@@ -14,7 +25,7 @@ namespace HttpClient.Extension.Resilience
         }
 
         /// <summary>
-        /// 设置了此参数，<paramref name="WaitAndRetry"/>将失效，Retry,WaitAndRetry以最后一个设置为有效设置
+        /// 重试次数
         /// </summary>
         /// <param name="retry"></param>
         /// <returns></returns>
@@ -22,40 +33,37 @@ namespace HttpClient.Extension.Resilience
         public IHttpRequestBuilder Retry(int retry)
         {
             if (retry < 0) throw new ArgumentException("The number of retries must be greater than or equal to 0");
-
             _retry = retry;
-            _waitAndRetrySleepDurations = null;
             return this;
         }
 
         /// <summary>
-        /// 设置了此参数，<paramref name="Retry"/>将失效
+        /// 重试等待时长，索引跟第几次重试对应
         /// </summary>
         /// <param name="sleepDurations"></param>
         /// <returns></returns>
         public IHttpRequestBuilder WaitAndRetry(params TimeSpan[] sleepDurations)
         {
-            _retry = 0;
             _waitAndRetrySleepDurations = sleepDurations;
             return this;
         }
 
         public IHttpRequestBuilder OnRetry(
-            Action<IServiceProvider, DelegateResult<HttpResponseMessage>, TimeSpan, int, Context> onRetry)
+            Action<IServiceProvider, TimeSpan, int, ResilienceContext> onRetry)
         {
             _onRetry = onRetry;
             return this;
         }
 
         public IHttpRequestBuilder FallbackHandleAsync(
-            Func<IServiceProvider, Exception, Context, Task<HttpResponseMessage>> handle)
+            Func<IServiceProvider, Exception, ResilienceContext, Task<HttpResponseMessage>> handle)
         {
             _fallbackHandleAsync = handle;
             return this;
         }
 
         public IHttpRequestBuilder OnFallbackAsync(
-            Func<IServiceProvider, DelegateResult<HttpResponseMessage>, Context, Task>? action)
+            Func<IServiceProvider, ResilienceContext, Task>? action)
         {
             _onFallbackAsync = action;
             return this;

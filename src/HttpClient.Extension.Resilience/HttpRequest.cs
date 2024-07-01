@@ -6,20 +6,15 @@ using System.Net.Http;
 
 namespace HttpClient.Extension.Resilience
 {
-    public sealed class HttpRequest : IHttpRequest
+    public sealed class HttpRequest(IHttpClientFactory factory, IServiceProvider serviceProvider)
+        : IHttpRequest
     {
-        private IHttpClientFactory Factory { get; }
+        private IHttpClientFactory Factory { get; } = factory;
 
-        private HttpRequestResilienceOptions Options { get; }
+        private HttpRequestResilienceOptions Options { get; } =
+            serviceProvider.GetService<HttpRequestResilienceOptions>();
 
-        private IServiceProvider ServiceProvider { get; }
-
-        public HttpRequest(IHttpClientFactory factory, IServiceProvider serviceProvider)
-        {
-            Factory = factory;
-            Options = serviceProvider.GetService<HttpRequestResilienceOptions>();
-            ServiceProvider = serviceProvider;
-        }
+        private IServiceProvider ServiceProvider { get; } = serviceProvider;
 
         public IHttpRequestBuilder Create(string name = null)
         {
@@ -32,9 +27,7 @@ namespace HttpClient.Extension.Resilience
             if (Options is null) return builder;
 
             builder._exceptionHandle = Options.ExceptionHandle;
-            builder._retry = Options.WaitAndRetrySleepDurations is not null && Options.WaitAndRetrySleepDurations.Any()
-                ? 0
-                : Options.Retry;
+            builder._retry = Options.Retry;
             builder._waitAndRetrySleepDurations = Options.WaitAndRetrySleepDurations;
             builder._onRetry = Options.OnRetry;
             builder._fallbackHandleAsync = Options.FallbackHandleAsync;

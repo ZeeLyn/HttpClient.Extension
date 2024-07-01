@@ -8,6 +8,8 @@ using HttpClient.Extension;
 using HttpClient.Extension.Resilience;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Timeout;
 
 namespace Examples.Controllers
 {
@@ -48,7 +50,7 @@ namespace Examples.Controllers
             //      });
 
             var result = await HttpRequest.Create("google")
-                .ExceptionHandle((sc, url, ex) => true)
+                //.ExceptionHandle((sc, url, ex) => true)
                 .FallbackHandleAsync(async (sc, ex, context) => await Task.FromResult(new HttpResponseMessage
                 {
                     StatusCode = 0,
@@ -94,7 +96,30 @@ namespace Examples.Controllers
         {
             //var c = new System.Net.Http.HttpConnectionResponseContent();
             var files = Request.Form.Files;
-            return Ok(new { id = 1 });
+            return Ok(new { id = 1, files = files.Count });
+        }
+
+        public async Task<IActionResult> Test()
+        {
+            var pipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
+                .AddRetry(new Polly.Retry.RetryStrategyOptions<HttpResponseMessage>
+                {
+                    ShouldHandle = new PredicateBuilder<HttpResponseMessage>().Handle<Exception>()
+                        .HandleResult(resp => resp.StatusCode == System.Net.HttpStatusCode.OK),
+                    OnRetry = async arg =>
+                    {
+                        Console.WriteLine("重试。。。");
+                        await Task.CompletedTask;
+                    }
+                })
+                .AddTimeout(TimeSpan.FromSeconds(3)).Build();
+
+            var resp = await pipeline.ExecuteAsync<HttpResponseMessage>(async (cancelToken) =>
+            {
+                return await Task.FromResult(new HttpResponseMessage());
+            });
+
+            return Ok(resp);
         }
     }
 }
