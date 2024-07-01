@@ -286,8 +286,8 @@ namespace HttpClient.Extension.Resilience
 #else
                 var byteContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
 #endif
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType =
+                    MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(filePath), "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
@@ -306,9 +306,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var byteContent = new ByteArrayContent(file.FileBytes);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -326,9 +325,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var streamContent = new StreamContent(file.FileStream);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(streamContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -354,8 +352,8 @@ namespace HttpClient.Extension.Resilience
 #else
                 var byteContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
 #endif
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType =
+                    MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(filePath), "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
@@ -383,8 +381,8 @@ namespace HttpClient.Extension.Resilience
 #else
                 var byteContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
 #endif
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(filePath), out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType =
+                    MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(filePath), "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, "file", Path.GetFileName(filePath));
             }
@@ -407,9 +405,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var byteContent = new ByteArrayContent(file.FileBytes);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -433,9 +430,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var byteContent = new ByteArrayContent(file.FileBytes);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 byteContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(byteContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -458,9 +454,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var streamContent = new StreamContent(file.FileStream);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(streamContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -484,9 +479,8 @@ namespace HttpClient.Extension.Resilience
             foreach (var file in files)
             {
                 var streamContent = new StreamContent(file.FileStream);
-                if (!MediaType.MediaTypes.TryGetValue(Path.GetExtension(file.FileName) ?? string.Empty,
-                        out var mediaType))
-                    mediaType = "application/octet-stream";
+                var mediaType = MediaType.MediaTypes.GetValueOrDefault(Path.GetExtension(file.FileName) ?? string.Empty,
+                    "application/octet-stream");
                 streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
                 content.Add(streamContent, file.Name, file.FileName ?? string.Empty);
             }
@@ -593,7 +587,7 @@ namespace HttpClient.Extension.Resilience
             }
 
             var dir = Path.GetDirectoryName(saveFileName);
-            if (!Directory.Exists(dir))
+            if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 #if NETSTANDARD2_0
             using var fileStream = new FileStream(saveFileName, FileMode.Create);
