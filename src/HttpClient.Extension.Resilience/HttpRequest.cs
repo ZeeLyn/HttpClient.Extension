@@ -27,6 +27,7 @@ namespace HttpClient.Extension.Resilience
             if (Options is null) return builder;
 
             builder._exceptionHandle = Options.ExceptionHandle;
+            builder._resultHandle = Options.ResultHandle;
             builder._retry = Options.Retry;
             builder._waitAndRetrySleepDurations = Options.WaitAndRetrySleepDurations;
             builder._onRetry = Options.OnRetry;

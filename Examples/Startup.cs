@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using HttpClient.Extension.Resilience;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace Examples
 {
@@ -29,13 +31,26 @@ namespace Examples
         {
             services.AddControllers();
             services.AddHttpClient("google", client => { client.BaseAddress = new Uri("https://www.google.com"); });
+            services.AddHttpClient("local", client => { client.BaseAddress = new Uri("http://localhost:57395"); });
             services.AddHttpClientResilience(options =>
             {
-                options.ExceptionHandle = (sc, url, ex) =>
+                options.ExceptionHandle = (sc, url, ex, _) =>
                 {
                     Console.WriteLine(" 请求{0}出现错误：{1}", url, ex.Message);
                     return true;
                 };
+                options.ResultHandle = (_, resp, client) =>
+                {
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        client.Authorization("bearer", "safasdfasfasf");
+
+                        return true;
+                    }
+
+                    return false;
+                };
+
                 options.Retry = 3;
                 options.WaitAndRetrySleepDurations = null;
                 options.OnRetry = (sc, ts, retryCount, context) => { Console.WriteLine("执行第{0}次重试", retryCount); };

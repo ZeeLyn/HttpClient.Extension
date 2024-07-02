@@ -23,10 +23,11 @@ namespace HttpClient.Extension.Resilience
 
         private IServiceProvider ServiceProvider { get; }
 
-        internal Func<HttpResponseMessage, bool> _resultHandle { get; set; } =
-            resp => resp.StatusCode != System.Net.HttpStatusCode.OK;
+        internal Func<IServiceProvider, HttpResponseMessage, IHttpRequestBuilder, bool> _resultHandle { get; set; } =
+            (_, resp, _) => resp.StatusCode != System.Net.HttpStatusCode.OK;
 
-        internal Func<IServiceProvider, string, Exception, bool> _exceptionHandle { get; set; } = (_, _, _) => true;
+        internal Func<IServiceProvider, string, Exception, IHttpRequestBuilder, bool> _exceptionHandle { get; set; } =
+            (_, _, _, _) => true;
 
         internal int _retry { get; set; }
 

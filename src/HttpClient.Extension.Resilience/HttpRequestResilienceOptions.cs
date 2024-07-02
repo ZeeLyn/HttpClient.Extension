@@ -11,7 +11,12 @@ namespace HttpClient.Extension.Resilience
         /// <summary>
         /// 异常处理器，返回True将执行重试策略
         /// </summary>
-        public Func<IServiceProvider, string, Exception, bool> ExceptionHandle { get; set; } = (_, _, _) => true;
+        public Func<IServiceProvider, string, Exception, IHttpRequestBuilder, bool>
+            ExceptionHandle { get; set; } = (_, _, _, _) => true;
+
+
+        public Func<IServiceProvider, HttpResponseMessage, IHttpRequestBuilder, bool>
+            ResultHandle { get; set; } = (_, _, _) => true;
 
         /// <summary>
         /// 重试次数

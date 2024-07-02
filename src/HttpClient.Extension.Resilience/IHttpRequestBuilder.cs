@@ -34,10 +34,12 @@ namespace HttpClient.Extension.Resilience
 
         #region Policy
 
-        IHttpRequestBuilder ResultHandle(Func<HttpResponseMessage, bool> handle);
+        IHttpRequestBuilder ResultHandle(
+            Func<IServiceProvider, HttpResponseMessage, IHttpRequestBuilder, bool> handle);
 
 
-        IHttpRequestBuilder ExceptionHandle(Func<IServiceProvider, string, Exception, bool> handle);
+        IHttpRequestBuilder ExceptionHandle(
+            Func<IServiceProvider, string, Exception, IHttpRequestBuilder, bool> handle);
 
         /// <summary>
         /// 重试次数

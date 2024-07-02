@@ -87,6 +87,15 @@ namespace Examples.Controllers
                     scope = "server",
                     grant_type = "password"
                 });
+            return BadRequest(client.Result);
+        }
+
+        [HttpGet("req3")]
+        public async Task<IActionResult> RequestAPI3()
+        {
+            var client = await HttpRequest.Create("local")
+                .Timeout(TimeSpan.FromSeconds(10))
+                .GetAsync<string>("/test/req2");
             return Ok(client.Result);
         }
 
@@ -97,29 +106,6 @@ namespace Examples.Controllers
             //var c = new System.Net.Http.HttpConnectionResponseContent();
             var files = Request.Form.Files;
             return Ok(new { id = 1, files = files.Count });
-        }
-
-        public async Task<IActionResult> Test()
-        {
-            var pipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
-                .AddRetry(new Polly.Retry.RetryStrategyOptions<HttpResponseMessage>
-                {
-                    ShouldHandle = new PredicateBuilder<HttpResponseMessage>().Handle<Exception>()
-                        .HandleResult(resp => resp.StatusCode == System.Net.HttpStatusCode.OK),
-                    OnRetry = async arg =>
-                    {
-                        Console.WriteLine("重试。。。");
-                        await Task.CompletedTask;
-                    }
-                })
-                .AddTimeout(TimeSpan.FromSeconds(3)).Build();
-
-            var resp = await pipeline.ExecuteAsync<HttpResponseMessage>(async (cancelToken) =>
-            {
-                return await Task.FromResult(new HttpResponseMessage());
-            });
-
-            return Ok(resp);
         }
     }
 }
