@@ -77,7 +77,7 @@ namespace Examples.Controllers
         [HttpGet("req2")]
         public async Task<IActionResult> RequestAPI2()
         {
-            var client = await HttpClientFactory.CreateClient()
+            var result = await HttpClientFactory.CreateClient()
                 .Authorization("Basic", "YnVzaW5lc3M6WGNtZzEyMw==")
                 .Timeout(TimeSpan.FromSeconds(10))
                 .PostFormAsync<string>("https://port.hanyunmmip.cn/auth/oauth/token", new
@@ -87,16 +87,16 @@ namespace Examples.Controllers
                     scope = "server",
                     grant_type = "password"
                 });
-            return BadRequest(client.Result);
+            return BadRequest(result.Result);
         }
 
         [HttpGet("req3")]
         public async Task<IActionResult> RequestAPI3()
         {
-            var client = await HttpRequest.Create("local")
+            var result = await HttpRequest.Create("local")
                 .Timeout(TimeSpan.FromSeconds(10))
                 .GetAsync<string>("/test/req2");
-            return Ok(client.Result);
+            return Ok(result);
         }
 
 

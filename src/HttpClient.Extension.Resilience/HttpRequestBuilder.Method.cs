@@ -20,82 +20,88 @@ namespace HttpClient.Extension.Resilience
         private async Task<HttpResponsePolicyResult> RequestWrapPolicyAsync(string requestUrl,
             Func<CancellationToken, Task<HttpResponseMessage>> request)
         {
-            var result = new HttpResponsePolicyResult();
-            Exception exception = default;
-            var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
-
-            var predicateBuilder = new PredicateBuilder<HttpResponseMessage>()
-                .HandleResult(resp =>
-                {
-                    Console.WriteLine("对结果检查");
-                    return _resultHandle?.Invoke(ServiceProvider, resp, this) ?? true;
-                })
-                .Handle<Exception>(ex =>
-                {
-                    requestUrl = Client?.BaseAddress + requestUrl;
-                    exception = ex;
-                    Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
-                    return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex, this) ?? true;
-                });
-
-
-            builder.AddFallback(new FallbackStrategyOptions<HttpResponseMessage>
+            try
             {
-                ShouldHandle = predicateBuilder,
-                FallbackAction = async args =>
-                {
-                    Logger.LogInformation("Executing fallback");
-                    result.Exception = exception;
-                    return Outcome.FromResult(_fallbackHandleAsync is not null
-                        ? await _fallbackHandleAsync.Invoke(ServiceProvider, exception, args.Context)
-                        : new HttpResponseMessage
-                        {
-                            StatusCode = 0,
-                            Content = new StringContent(exception is null ? "Request failed" : exception.Message,
-                                Encoding.UTF8)
-                        });
-                },
-                OnFallback = async args =>
-                {
-                    Logger.LogInformation("Start execute fallback");
-                    if (_onFallbackAsync is not null)
-                        await _onFallbackAsync.Invoke(ServiceProvider, args.Context);
-                }
-            });
-            if (_retry > 0)
-            {
-                var retryOptions = new RetryStrategyOptions<HttpResponseMessage>
+                var result = new HttpResponsePolicyResult();
+                Exception exception = default;
+                var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
+
+                var predicateBuilder = new PredicateBuilder<HttpResponseMessage>()
+                    .HandleResult(resp =>
+                    {
+                        Console.WriteLine("对结果检查");
+                        return _resultHandle?.Invoke(ServiceProvider, resp, this) ?? true;
+                    })
+                    .Handle<Exception>(ex =>
+                    {
+                        requestUrl = Client?.BaseAddress + requestUrl;
+                        exception = ex;
+                        Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
+                        return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex, this) ?? true;
+                    });
+
+
+                builder.AddFallback(new FallbackStrategyOptions<HttpResponseMessage>
                 {
                     ShouldHandle = predicateBuilder,
-                    MaxRetryAttempts = _retry,
-                    OnRetry = async args =>
+                    FallbackAction = async args =>
                     {
-                        exception = default;
-                        _onRetry?.Invoke(ServiceProvider, TimeSpan.Zero, args.AttemptNumber + 1, args.Context);
-                        Logger.LogInformation("Retry: {0}", args.AttemptNumber + 1);
-                        await Task.CompletedTask;
+                        Logger.LogInformation("Executing fallback");
+                        result.Exception = exception;
+                        return Outcome.FromResult(_fallbackHandleAsync is not null
+                            ? await _fallbackHandleAsync.Invoke(ServiceProvider, exception, args.Context)
+                            : new HttpResponseMessage
+                            {
+                                StatusCode = 0,
+                                Content = new StringContent(exception is null ? "Request failed" : exception.Message,
+                                    Encoding.UTF8)
+                            });
                     },
-                };
-
-
-                if (_waitAndRetrySleepDurations?.Any() ?? false)
-                {
-                    retryOptions.DelayGenerator = async args =>
+                    OnFallback = async args =>
                     {
-                        if (args.AttemptNumber - 1 > _waitAndRetrySleepDurations.Count())
-                            return TimeSpan.Zero;
-                        return await Task.FromResult(_waitAndRetrySleepDurations.ElementAt(args.AttemptNumber));
+                        Logger.LogInformation("Start execute fallback");
+                        if (_onFallbackAsync is not null)
+                            await _onFallbackAsync.Invoke(ServiceProvider, args.Context);
+                    }
+                });
+                if (_retry > 0)
+                {
+                    var retryOptions = new RetryStrategyOptions<HttpResponseMessage>
+                    {
+                        ShouldHandle = predicateBuilder,
+                        MaxRetryAttempts = _retry,
+                        OnRetry = async args =>
+                        {
+                            exception = default;
+                            _onRetry?.Invoke(ServiceProvider, TimeSpan.Zero, args.AttemptNumber + 1, args.Context);
+                            Logger.LogInformation("Retry: {0}", args.AttemptNumber + 1);
+                            await Task.CompletedTask;
+                        },
                     };
+
+
+                    if (_waitAndRetrySleepDurations?.Any() ?? false)
+                    {
+                        retryOptions.DelayGenerator = async args =>
+                        {
+                            if (args.AttemptNumber - 1 > _waitAndRetrySleepDurations.Count())
+                                return TimeSpan.Zero;
+                            return await Task.FromResult(_waitAndRetrySleepDurations.ElementAt(args.AttemptNumber));
+                        };
+                    }
+
+                    builder.AddRetry(retryOptions);
                 }
 
-                builder.AddRetry(retryOptions);
+                var pipeline = builder.Build();
+                result.ResponseMessage =
+                    await pipeline.ExecuteAsync(async cancellationToken => await request(cancellationToken));
+                return result;
             }
-
-            var pipeline = builder.Build();
-            result.ResponseMessage =
-                await pipeline.ExecuteAsync(async cancellationToken => await request(cancellationToken));
-            Dispose();
-            return result;
+            finally
+            {
+                Dispose();
+            }
         }
 
         //private async Task<HttpResponsePolicyResult> RequestWrapPolicyAsync(string requestUrl,
