@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
@@ -9,11 +9,12 @@
     <PackageTags>netcore,httpclient,restclient,restapi</PackageTags>
     <Authors>ZeeLyn</Authors>
     <Description>Extension method to httpclient.</Description>
-    <Version>1.1.0</Version>
+    <Version>2.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.6.0" />
   </ItemGroup>
 
 </Project>

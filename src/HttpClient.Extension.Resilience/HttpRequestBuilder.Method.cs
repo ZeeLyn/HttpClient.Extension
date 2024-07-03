@@ -26,24 +26,10 @@ namespace HttpClient.Extension.Resilience
                 Exception exception = default;
                 var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
 
-                var predicateBuilder = new PredicateBuilder<HttpResponseMessage>()
-                    .HandleResult(resp =>
-                    {
-                        Console.WriteLine("对结果检查");
-                        return _resultHandle?.Invoke(ServiceProvider, resp, this) ?? true;
-                    })
-                    .Handle<Exception>(ex =>
-                    {
-                        requestUrl = Client?.BaseAddress + requestUrl;
-                        exception = ex;
-                        Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
-                        return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex, this) ?? true;
-                    });
-
 
                 builder.AddFallback(new FallbackStrategyOptions<HttpResponseMessage>
                 {
-                    ShouldHandle = predicateBuilder,
+                    ShouldHandle = async e => await PredicateResult.True(),
                     FallbackAction = async args =>
                     {
                         Logger.LogInformation("Executing fallback");
@@ -68,7 +54,19 @@ namespace HttpClient.Extension.Resilience
                 {
                     var retryOptions = new RetryStrategyOptions<HttpResponseMessage>
                     {
-                        ShouldHandle = predicateBuilder,
+                        ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                            .HandleResult(resp =>
+                            {
+                                Console.WriteLine("对结果检查");
+                                return _resultHandle?.Invoke(ServiceProvider, resp, this) ?? true;
+                            })
+                            .Handle<Exception>(ex =>
+                            {
+                                requestUrl = Client?.BaseAddress + requestUrl;
+                                exception = ex;
+                                Logger.LogError(ex, "An exception occurred when requesting '{0}'", requestUrl);
+                                return _exceptionHandle?.Invoke(ServiceProvider, requestUrl, ex, this) ?? true;
+                            }),
                         MaxRetryAttempts = _retry,
                         OnRetry = async args =>
                         {

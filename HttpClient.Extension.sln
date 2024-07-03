@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpClient.Extension", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples", "Examples\Examples.csproj", "{5B149138-44BF-4521-8F7A-D4E81955F6E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpClient.Extension.Resilience", "src\HttpClient.Extension.Resilience\HttpClient.Extension.Resilience.csproj", "{9D62E7B7-1B84-4664-93CF-D141A2F97485}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,17 +23,12 @@ Global
 		{5B149138-44BF-4521-8F7A-D4E81955F6E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B149138-44BF-4521-8F7A-D4E81955F6E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B149138-44BF-4521-8F7A-D4E81955F6E3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9D62E7B7-1B84-4664-93CF-D141A2F97485}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9D62E7B7-1B84-4664-93CF-D141A2F97485}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9D62E7B7-1B84-4664-93CF-D141A2F97485}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9D62E7B7-1B84-4664-93CF-D141A2F97485}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4056B8F0-05B5-4DC2-9090-4CF89640E41D} = {CF22CE00-579B-4DCB-83C4-4AF7C2B07AB1}
-		{9D62E7B7-1B84-4664-93CF-D141A2F97485} = {CF22CE00-579B-4DCB-83C4-4AF7C2B07AB1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FF547566-3205-472C-B178-2CB91E649CDA}
