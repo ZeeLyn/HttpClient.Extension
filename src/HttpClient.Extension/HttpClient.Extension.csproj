@@ -9,7 +9,7 @@
     <PackageTags>netcore,httpclient,restclient,restapi</PackageTags>
     <Authors>ZeeLyn</Authors>
     <Description>Extension method to httpclient.</Description>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

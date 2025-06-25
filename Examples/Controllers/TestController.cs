@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using HttpClient.Extension;
 using HttpClient.Extension.Resilience;
@@ -87,6 +88,7 @@ namespace Examples.Controllers
                 });
             return Ok(client.Result);
         }
+
 
 
         [Route("req-test"), Consumes("multipart/form-data")]

@@ -387,6 +387,35 @@ namespace HttpClient.Extension
 
             onCompleted?.Invoke(totalSize);
         }
+
+        public static async Task<ResponseResult<Stream>> DownloadWithStreamAsync(this System.Net.Http.HttpClient client, string url, CancellationToken cancellationToken = default)
+        {
+            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var result = new ResponseResult<Stream>
+            {
+                Succeed = response.IsSuccessStatusCode,
+                StatusCode = response.StatusCode,
+                Headers = response.Headers,
+                Result =response.IsSuccessStatusCode ? await response.Content.ReadAsStreamAsync() : default
+            };
+            if (result.Result.CanSeek)
+                result.Result.Seek(0, SeekOrigin.Begin);
+            return result;
+        }
+
+
+        public static async Task<ResponseResult<byte[]>> DownloadWithBytesAsync(this System.Net.Http.HttpClient client, string url, CancellationToken cancellationToken = default)
+        {
+            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var result = new ResponseResult<byte[]>
+            {
+                Succeed = response.IsSuccessStatusCode,
+                StatusCode = response.StatusCode,
+                Headers = response.Headers,
+                Result = response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync() : default
+            };
+            return result;
+        }
         #endregion
     }
 }
