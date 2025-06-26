@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace HttpClient.Extension
@@ -22,13 +24,13 @@ namespace HttpClient.Extension
                     result = await content.ReadAsByteArrayAsync();
                     break;
                 case "System.String":
-                    result = await content.ReadAsStringAsync();
+                    result = await content.ReadResponseAsStringAsync();
                     break;
                 case "System.Byte":
                     result = await Convert(content, byte.Parse);
                     break;
                 case "System.Char":
-                    var val = await content.ReadAsStringAsync();
+                    var val = await content.ReadResponseAsStringAsync();
                     if (val.Length > 0) result = val[0];
                     break;
                 case "System.Boolean":
@@ -77,7 +79,7 @@ namespace HttpClient.Extension
                     result = await Convert(content, Guid.Parse);
                     break;
                 default:
-                    var json = await content.ReadAsStringAsync();
+                    var json = await content.ReadResponseAsStringAsync();
                     result = JsonConvert.DeserializeObject<TResult>(json);
                     break;
             }
@@ -85,6 +87,13 @@ namespace HttpClient.Extension
             if (result == null)
                 return default;
             return (TResult)result;
+        }
+
+        private static async Task<string> ReadResponseAsStringAsync(this HttpContent content)
+        {
+            using var reader = new StreamReader(await content.ReadAsStreamAsync(), Encoding.UTF8);
+            return await reader.ReadToEndAsync();
+
         }
 
         private static async Task<TResult> Convert<TResult>(HttpContent content, Func<string, TResult> converter)
