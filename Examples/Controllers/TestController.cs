@@ -90,6 +90,12 @@ namespace Examples.Controllers
         }
 
 
+        [HttpGet("req3")]
+        public async Task<IActionResult> RequestAPI3()
+        {
+            var client = await HttpClientFactory.CreateClient().GetByteArrayAsync("https://web-vue-app.oss-cn-beijing.aliyuncs.com/pic_check_deliver/private_assets/12/64/1935543610967855104.png?OSSAccessKeyId=LTAITfFOVVudHybU&Expires=1751184675&Signature=ga9yfPm2eMladZV5bt04GLdzdrE%3D");
+            return Ok(client);
+        }
 
         [Route("req-test"), Consumes("multipart/form-data")]
         public IActionResult Req([FromForm] string name)
