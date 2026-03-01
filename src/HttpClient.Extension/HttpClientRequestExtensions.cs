@@ -23,12 +23,14 @@ namespace HttpClient.Extension
         public static async Task<ResponseResult<TResult>> GetAsync<TResult>(this System.Net.Http.HttpClient client, string url)
         {
             using var response = await client.GetAsync(url);
+            var result = await response.Content.ReadAsync<TResult>(response.IsSuccessStatusCode);
             return new ResponseResult<TResult>
             {
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
-                Result = await response.Content.ReadAsync<TResult>()
+                Result =result.Item1,
+                Raw=result.Item2
             };
         }
         #region POST
@@ -36,24 +38,28 @@ namespace HttpClient.Extension
         public static async Task<ResponseResult<TResult>> PostAsync<TResult>(this System.Net.Http.HttpClient client, string url, HttpContent data)
         {
             using var response = await client.PostAsync(url, data);
+            var result = await response.Content.ReadAsync<TResult>(response.IsSuccessStatusCode);
             return new ResponseResult<TResult>
             {
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
-                Result = await response.Content.ReadAsync<TResult>()
+                Result = result.Item1,
+                Raw=result.Item2
             };
         }
 
         public static async Task<ResponseResult<TResult>> PostAsync<TResult>(this System.Net.Http.HttpClient client, string url, string data, string contentType = "application/x-www-form-urlencoded")
         {
             using var response = await client.PostAsync(url, new StringContent(data, Encoding.UTF8, contentType));
+            var result = await response.Content.ReadAsync<TResult>(response.IsSuccessStatusCode);
             return new ResponseResult<TResult>
             {
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
-                Result = await response.Content.ReadAsync<TResult>()
+                Result = result.Item1,
+                Raw=result.Item2
             };
         }
 
@@ -278,13 +284,16 @@ namespace HttpClient.Extension
         public static async Task<ResponseResult<TResult>> PutAsync<TResult>(this System.Net.Http.HttpClient client, string url, HttpContent data)
         {
             using var response = await client.PutAsync(url, data);
+            var result = await response.Content.ReadAsync<TResult>(response.IsSuccessStatusCode);
             return new ResponseResult<TResult>
             {
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
-                Result = await response.Content.ReadAsync<TResult>()
+                Result = result.Item1,
+                Raw=result.Item2
             };
+
         }
 
         public static async Task<ResponseResult<TResult>> PutAsync<TResult>(this System.Net.Http.HttpClient client, string url, string data, string contentType = "application/json")
@@ -305,12 +314,14 @@ namespace HttpClient.Extension
         public static async Task<ResponseResult<TResult>> DeleteAsync<TResult>(this System.Net.Http.HttpClient client, string url)
         {
             using var response = await client.DeleteAsync(url);
+            var result = await response.Content.ReadAsync<TResult>(response.IsSuccessStatusCode);
             return new ResponseResult<TResult>
             {
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
-                Result = await response.Content.ReadAsync<TResult>()
+                Result = result.Item1,
+                Raw=result.Item2
             };
         }
 

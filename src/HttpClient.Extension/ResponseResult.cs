@@ -15,5 +15,10 @@ namespace HttpClient.Extension
         public HttpResponseHeaders Headers { get; set; }
 
         public TResult Result { get; set; }
+
+        /// <summary>
+        /// Data is returned only when the request failed
+        /// </summary>
+        public string Raw { get; set; }
     }
 }

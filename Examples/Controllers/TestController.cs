@@ -93,8 +93,14 @@ namespace Examples.Controllers
         [HttpGet("req3")]
         public async Task<IActionResult> RequestAPI3()
         {
-            var client = await HttpClientFactory.CreateClient().GetByteArrayAsync("https://web-vue-app.oss-cn-beijing.aliyuncs.com/pic_check_deliver/private_assets/12/64/1935543610967855104.png?OSSAccessKeyId=LTAITfFOVVudHybU&Expires=1751184675&Signature=ga9yfPm2eMladZV5bt04GLdzdrE%3D");
+            var client = await HttpClientFactory.CreateClient().GetAsync<TestResponse>("http://localhost:5000/test/error_request");
             return Ok(client);
+        }
+
+        [HttpGet("error_request")]
+        public async Task<IActionResult> ErrorRequest()
+        {
+            return BadRequest("aaaaa");
         }
 
         [Route("req-test"), Consumes("multipart/form-data")]
@@ -104,5 +110,9 @@ namespace Examples.Controllers
             var files = Request.Form.Files;
             return Ok(new { id = 1 });
         }
+    }
+    public class TestResponse
+    {
+
     }
 }
