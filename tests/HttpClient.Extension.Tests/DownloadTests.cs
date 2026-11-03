@@ -13,6 +13,80 @@ public class DownloadTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task ByteDownloadsKeepContentHeadersAndFailedResponseText(bool failed)
+    {
+        const string body = "错误 café";
+        var content = new StringContent(body, Encoding.Unicode, "text/plain");
+        using var client = RequestTests.CreateClient(_ => new HttpResponseMessage(failed ? HttpStatusCode.BadRequest : HttpStatusCode.OK) { Content = content });
+
+        var response = await client.DownloadWithBytesAsync("/");
+
+        Assert.Equal(!failed, response.Succeed);
+        Assert.Equal("utf-16", response.ContentHeaders.ContentType!.CharSet);
+        Assert.Equal(failed ? body : "", response.Raw);
+        if (failed)
+            Assert.Null(response.Result);
+        else
+            Assert.Equal(Encoding.Unicode.GetBytes(body), response.Result);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ByteDownloadsHonorResponseBufferLimit(bool failed)
+    {
+        using var client = RequestTests.CreateClient(_ => new HttpResponseMessage(failed ? HttpStatusCode.BadRequest : HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(new byte[4096])
+        });
+        client.MaxResponseContentBufferSize = 16;
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => client.DownloadWithBytesAsync("/"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ByteDownloadTimeoutIncludesResponseBody(bool failed)
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        await using var app = builder.Build();
+        var bodyStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        app.MapGet("/blocked", async context =>
+        {
+            if (failed)
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentLength = 3;
+            await context.Response.Body.WriteAsync("a"u8.ToArray());
+            await context.Response.Body.FlushAsync();
+            bodyStarted.TrySetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted);
+        });
+        await app.StartAsync();
+        using var client = new System.Net.Http.HttpClient
+        {
+            BaseAddress = new Uri(app.Urls.Single()), Timeout = TimeSpan.FromSeconds(1)
+        };
+        using var cleanup = new CancellationTokenSource();
+
+        try
+        {
+            var pending = client.DownloadWithBytesAsync("/blocked", cleanup.Token);
+            await bodyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.False(cleanup.IsCancellationRequested);
+        }
+        finally
+        {
+            cleanup.Cancel();
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task ChunkedHttpResponseSupportsFileAndStreamDownloads(bool returnStream)
     {
         var builder = WebApplication.CreateSlimBuilder();

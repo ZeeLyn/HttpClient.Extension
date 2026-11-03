@@ -23,6 +23,7 @@ public class RequestTests
         var result = await SendStreamAsync(client, method);
 
         Assert.True(result.Succeed);
+        Assert.Equal("text/plain", result.ContentHeaders.ContentType!.MediaType);
         Assert.Equal(0, content.DisposeCount);
         using (var stream = result.Result)
         using (var reader = new StreamReader(stream))
@@ -50,6 +51,7 @@ public class RequestTests
         Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
         Assert.Null(result.Result);
         Assert.Equal("missing", result.Raw);
+        Assert.Equal("text/plain", result.ContentHeaders.ContentType!.MediaType);
         Assert.Equal(1, content.DisposeCount);
     }
 
@@ -86,7 +88,36 @@ public class RequestTests
         var result = await client.HeadAsync("/");
 
         Assert.Equal(123, result.Result.ContentLength);
+        Assert.Same(result.Result, result.ContentHeaders);
         Assert.Equal(1, content.DisposeCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ContentHeadersRemainAvailableAfterResponseDisposal(bool failed)
+    {
+        var content = new TrackedContent("response");
+        content.Headers.ContentLength = 8;
+        content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment") { FileName = "file.txt" };
+        var modified = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        content.Headers.LastModified = modified;
+        using var client = CreateClient(_ =>
+        {
+            var response = new HttpResponseMessage(failed ? HttpStatusCode.BadRequest : HttpStatusCode.OK) { Content = content };
+            response.Headers.Add("X-Request-Id", "request-id");
+            return response;
+        });
+
+        var result = await client.GetAsync<string>("/");
+
+        Assert.Equal(1, content.DisposeCount);
+        Assert.Equal("request-id", Assert.Single(result.Headers.GetValues("X-Request-Id")));
+        Assert.Equal("text/plain", result.ContentHeaders.ContentType!.MediaType);
+        Assert.Equal(8, result.ContentHeaders.ContentLength);
+        Assert.Equal("file.txt", result.ContentHeaders.ContentDisposition!.FileName);
+        Assert.Equal(modified, result.ContentHeaders.LastModified);
+        Assert.Equal(failed ? "response" : "", result.Raw);
     }
 
     [Theory]

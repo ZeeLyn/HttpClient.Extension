@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -27,12 +28,22 @@ namespace HttpClient.Extension
         public override int WriteTimeout { get => _stream.WriteTimeout; set => _stream.WriteTimeout = value; }
         public override void Flush() => _stream.Flush();
         public override Task FlushAsync(CancellationToken cancellationToken) => _stream.FlushAsync(cancellationToken);
+        public override int ReadByte() => _stream.ReadByte();
+        public override void WriteByte(byte value) => _stream.WriteByte(value);
         public override int Read(byte[] buffer, int offset, int count) => _stream.Read(buffer, offset, count);
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
             _stream.ReadAsync(buffer, offset, count, cancellationToken);
         public override void Write(byte[] buffer, int offset, int count) => _stream.Write(buffer, offset, count);
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
             _stream.WriteAsync(buffer, offset, count, cancellationToken);
+#if !NETSTANDARD2_0
+        public override int Read(Span<byte> buffer) => _stream.Read(buffer);
+        public override void Write(ReadOnlySpan<byte> buffer) => _stream.Write(buffer);
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            _stream.ReadAsync(buffer, cancellationToken);
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) =>
+            _stream.WriteAsync(buffer, cancellationToken);
+#endif
         public override long Seek(long offset, SeekOrigin origin) => _stream.Seek(offset, origin);
         public override void SetLength(long value) => _stream.SetLength(value);
         public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken) =>

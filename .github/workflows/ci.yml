@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: Build all target frameworks and examples
+        run: dotnet build HttpClient.Extension.sln -c Release -p:GeneratePackageOnBuild=false
+      - name: Test native targets on .NET 8 and .NET 10
+        run: dotnet test tests/HttpClient.Extension.Tests/HttpClient.Extension.Tests.csproj -c Release -p:GeneratePackageOnBuild=false
+      - name: Test netstandard2.0 on .NET 8 and .NET 10
+        run: dotnet test tests/HttpClient.Extension.Tests/HttpClient.Extension.Tests.csproj -c Release -p:GeneratePackageOnBuild=false -p:LibraryTargetFramework=netstandard2.0
+      - name: Test netstandard2.1 on .NET 8 and .NET 10
+        run: dotnet test tests/HttpClient.Extension.Tests/HttpClient.Extension.Tests.csproj -c Release -p:GeneratePackageOnBuild=false -p:LibraryTargetFramework=netstandard2.1

@@ -14,10 +14,15 @@ namespace HttpClient.Extension
 
         public HttpResponseHeaders Headers { get; set; }
 
+        /// <summary>
+        /// 响应内容头，包括 Content-Type、Content-Length 和 Content-Disposition。
+        /// </summary>
+        public HttpContentHeaders ContentHeaders { get; set; }
+
         public TResult Result { get; set; }
 
         /// <summary>
-        /// Data is returned only when the request failed
+        /// HTTP 非成功状态码时，保存按响应字符集解码的正文。
         /// </summary>
         public string Raw { get; set; }
     }

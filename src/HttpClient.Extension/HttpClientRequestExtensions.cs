@@ -313,6 +313,7 @@ namespace HttpClient.Extension
                 Succeed = response.IsSuccessStatusCode,
                 StatusCode = response.StatusCode,
                 Headers = response.Headers,
+                ContentHeaders = response.Content.Headers,
                 Result = response.Content.Headers
             };
         }
@@ -378,11 +379,9 @@ namespace HttpClient.Extension
                 await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
         }
 
-        public static async Task<ResponseResult<byte[]>> DownloadWithBytesAsync(this System.Net.Http.HttpClient client, string url, CancellationToken cancellationToken = default)
+        public static Task<ResponseResult<byte[]>> DownloadWithBytesAsync(this System.Net.Http.HttpClient client, string url, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            return await ReadResponseAsync<byte[]>(
-                await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
+            return client.GetAsync<byte[]>(url, cancellationToken);
         }
 
         private static void AddMultipartFile(MultipartFormDataContent form, HttpContent file, string fileName, string name)
@@ -414,6 +413,7 @@ namespace HttpClient.Extension
                     Succeed = response.IsSuccessStatusCode,
                     StatusCode = response.StatusCode,
                     Headers = response.Headers,
+                    ContentHeaders = response.Content.Headers,
                     Result = data.Item1,
                     Raw = data.Item2
                 };

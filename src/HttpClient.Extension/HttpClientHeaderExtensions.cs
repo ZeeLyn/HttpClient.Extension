@@ -65,7 +65,7 @@ namespace HttpClient.Extension
 
         public static System.Net.Http.HttpClient Accept(this System.Net.Http.HttpClient client, string accept)
         {
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(accept));
+            client.DefaultRequestHeaders.Accept.ParseAdd(accept);
             return client;
         }
 
